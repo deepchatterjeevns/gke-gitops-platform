@@ -1,0 +1,28 @@
+# Wave 0 manifests: namespaces + demo KSA with Workload Identity annotation.
+# The KSA must EXIST before ESO/demo pods start (gotcha #3) — app-of-apps
+# wave ordering + this being a separate child Application guarantees it.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+  labels:
+    app.kubernetes.io/part-of: gke-gitops-poc
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: demo-app
+  namespace: demo
+  annotations:
+    # >>> INSERT YOUR VALUES: from terraform layer 3 output demo_app_gsa_email <<<
+    iam.gke.serviceAccount: ">>> INSERT YOUR VALUES: GSA EMAIL (gitops-poc-demo-app@PROJECT.iam.gserviceaccount.com) <<<"
+---
+# ESO needs its own KSA annotated too (ESO controller reads Secret Manager).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-secrets-eso
+  namespace: demo
+  annotations:
+    # >>> INSERT YOUR VALUES: same GSA email — ESO fetches on behalf of demo <<<
+    iam.gke.serviceAccount: ">>> INSERT YOUR VALUES: GSA EMAIL (gitops-poc-demo-app@PROJECT.iam.gserviceaccount.com) <<<"

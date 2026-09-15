@@ -1,0 +1,20 @@
+# Argo Rollouts controller — installed from upstream manifest (pinned),
+# kustomized here so ArgoCD owns the whole thing from Git.
+# ServerSideApply is required for CRDs (set in the child Application).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - https://github.com/argoproj/argo-rollouts/releases/download/v1.8.2/install.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: argo-rollouts
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 256Mi

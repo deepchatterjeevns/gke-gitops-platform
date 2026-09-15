@@ -1,0 +1,30 @@
+# Root of the app-of-apps tree (bullet 1 + 2).
+# ONE root Application points at gitops/apps/ — every child Application is a
+# file in that dir. Sync waves order the platform:
+#   wave 0: namespaces + KSAs (prereqs for WI pods)
+#   wave 1: argo-rollouts, kube-prometheus-stack, external-secrets
+#   wave 2: demo rollouts + SLO rules (need monitoring + rollouts CRDs)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: ">>> INSERT YOUR VALUES: your GitHub repo URL (https://github.com/USER/gke-gitops-platform.git) <<<"
+    targetRevision: main
+    path: gitops/apps
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true

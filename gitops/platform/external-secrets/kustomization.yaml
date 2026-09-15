@@ -1,0 +1,19 @@
+# ESO install (bullet 6). Kustomization over the official manifest bundle.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - https://raw.githubusercontent.com/external-secrets/external-secrets/v0.18.1/docs/snippets/namespaced-crds.yaml
+  - https://github.com/external-secrets/external-secrets/releases/download/v0.18.1/external-secrets.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: external-secrets
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi

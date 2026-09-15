@@ -1,0 +1,52 @@
+# Demo app base: Service + SecretStore/ExternalSecret (the KSA lives in
+# gitops/platform/namespaces — wave 0 — so exactly ONE ArgoCD app owns it).
+# The app: tiny Flask service exposing /healthz + /api with injectable
+# error/latency via env — the fault-injection surface for MTTD/SLO tests.
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  namespace: demo
+  labels:
+    app: demo-app
+spec:
+  selector:
+    app: demo-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+# SecretStore: Secret Manager via Workload Identity (bullet 6).
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: gcp-secret-store
+  namespace: demo
+spec:
+  provider:
+    gcpsm:
+      auth:
+        workloadIdentity:
+          # >>> INSERT YOUR VALUES: cluster location + project (the WI pool) <<<
+          clusterLocation: ">>> INSERT YOUR VALUES: REGION (us-central1 or asia-south1) <<<"
+          projectNumber: ">>> INSERT YOUR VALUES: PROJECT NUMBER (gcloud projects describe --format=value(projectNumber)) <<<"
+          serviceAccountEmail: ">>> INSERT YOUR VALUES: GSA EMAIL <<<"
+---
+# The projected secret (created by ESO from Secret Manager).
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: demo-api-key
+  namespace: demo
+spec:
+  refreshInterval: 60s # rotation propagation < 2× this — the bullet-6 test
+  secretStoreRef:
+    name: gcp-secret-store
+    kind: SecretStore
+  target:
+    name: demo-api-key # the k8s Secret ESO maintains
+  data:
+    - secretKey: api-key
+      remoteRef:
+        key: gitops-poc-demo-api-key # Secret Manager secret id (layer 1)

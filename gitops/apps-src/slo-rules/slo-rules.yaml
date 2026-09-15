@@ -1,0 +1,90 @@
+# SLO recording rules + MWMB burn-rate alerts (bullets 4 + 5).
+# Hand-rolled (no sloth/pyrra dependency): 99.9% availability SLO over 28d
+# for the demo app, multi-window-multi-burn alerts, error-budget remaining
+# series — the exact AWS-era SLO stack re-proved on GKE.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: demo-slo-rules
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack # picked up by the stack's rule selector
+spec:
+  groups:
+    - name: demo-app-slo
+      interval: 30s
+      rules:
+        # --- SLI building blocks ------------------------------------------------
+        - record: demo:requests:rate5m
+          expr: sum(rate(http_requests_total{service=~"demo-app.*"}[5m]))
+        - record: demo:errors:rate5m
+          expr: sum(rate(http_requests_total{service=~"demo-app.*",code=~"5.."}[5m]))
+        - record: demo:availability_sli:ratio_rate5m
+          expr: 1 - (demo:errors:rate5m / demo:requests:rate5m)
+
+        # --- Error budget: 99.9% target => 0.1% budget over 28d ------------------
+        - record: demo:error_budget:ratio
+          expr: 0.001
+        - record: demo:availability_objective:ratio
+          expr: 0.999
+        - record: demo:burn_rate5m
+          expr: demo:errors:rate5m / demo:requests:rate5m / demo:error_budget:ratio
+        - record: demo:burn_rate1h
+          expr: |
+            sum(rate(http_requests_total{service=~"demo-app.*",code=~"5.."}[1h]))
+            / sum(rate(http_requests_total{service=~"demo-app.*"}[1h]))
+            / demo:error_budget:ratio
+        - record: demo:burn_rate6h
+          expr: |
+            sum(rate(http_requests_total{service=~"demo-app.*",code=~"5.."}[6h]))
+            / sum(rate(http_requests_total{service=~"demo-app.*"}[6h]))
+            / demo:error_budget:ratio
+        - record: demo:burn_rate3d
+          expr: |
+            sum(rate(http_requests_total{service=~"demo-app.*",code=~"5.."}[3d]))
+            / sum(rate(http_requests_total{service=~"demo-app.*"}[3d]))
+            / demo:error_budget:ratio
+
+        # --- Budget REMAINING (the bullet-5 tracking series) ---------------------
+        - record: demo:error_budget_remaining:ratio
+          expr: |
+            1 -
+            (
+              (1 - (1 - sum(rate(http_requests_total{service=~"demo-app.*",code=~"5.."}[28d]))
+                    / sum(rate(http_requests_total{service=~"demo-app.*"}[28d]))))
+              / demo:error_budget:ratio
+            )
+
+        # --- MWMB burn alerts (Google SRE workbook thresholds) --------------------
+        # Fast burn: page-worthy. 14.4x budget burn over 1h AND 5m.
+        - alert: DemoSLOBurnRateFast
+          expr: demo:burn_rate1h > 14.4 and demo:burn_rate5m > 14.4
+          for: 2m
+          labels:
+            severity: critical
+            service: demo-app
+            slo: availability-99.9
+          annotations:
+            summary: "demo-app burning error budget 14.4x (1h+5m windows)"
+            description: "Fast burn — this is the -30% Sev1/Sev2 proactive alert pattern re-proved on GKE"
+        # Slow burn: ticket-worthy. 1x over 6h AND 3d.
+        - alert: DemoSLOBurnRateSlow
+          expr: demo:burn_rate6h > 6 and demo:burn_rate3d > 1
+          for: 5m
+          labels:
+            severity: warning
+            service: demo-app
+            slo: availability-99.9
+          annotations:
+            summary: "demo-app slow budget burn (6h+3d windows)"
+            description: "Ticket-worthy burn rate — budget exhausts in <28d at this rate"
+        # --- MTTD test alert (bullet 3): fires on ANY 5xx from demo-app --------
+        - alert: DemoAppErrorRateHigh
+          expr: demo:errors:rate5m / demo:requests:rate5m > 0.05
+          for: 1m
+          labels:
+            severity: critical
+            service: demo-app
+          annotations:
+            summary: "demo-app 5xx ratio > 5% over 5m"
+            description: "MTTD probe target — time from fault-injection to this firing is the measurement"

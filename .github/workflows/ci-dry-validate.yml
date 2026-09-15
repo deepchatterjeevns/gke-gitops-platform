@@ -1,0 +1,57 @@
+# DRY-ONLY CI — no cloud credentials, no cluster, no live state.
+# Validates: terraform (fmt/init/validate), kustomize renders, bash -n,
+# python parse, hardcoded-cred scan (bullet 6). Nothing here talks to GCP.
+name: ci-dry-validate
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  dry-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.5"
+
+      - name: terraform fmt check
+        run: |
+          fmt_failed=0
+          for layer in 0-gcs-backend 1-baseline 2-network 3-clusters; do
+            terraform -chdir=terraform/$layer fmt -check -recursive || { echo "fmt: $layer"; fmt_failed=1; }
+          done
+          exit $fmt_failed
+
+      - name: terraform validate (backend-less)
+        run: |
+          for layer in 0-gcs-backend 1-baseline 2-network 3-clusters; do
+            terraform -chdir=terraform/$layer init -backend=false >/dev/null
+            terraform -chdir=terraform/$layer validate
+          done
+
+      - name: kustomize render (all overlays)
+        run: |
+          kubectl kustomize gitops/platform/namespaces > /dev/null
+          kubectl kustomize gitops/apps-src/demo-app/overlays/prod > /dev/null
+          kubectl kustomize gitops/apps-src/demo-app/overlays/dev > /dev/null
+          kubectl kustomize gitops/apps-src/slo-rules > /dev/null
+
+      - name: bash parse (all scripts)
+        run: |
+          for s in scripts/*.sh scripts/evidence_tests/*.sh; do bash -n "$s"; done
+
+      - name: python parse
+        run: python3 -m py_compile scripts/generate_traffic.py scripts/summarize_evidence.py
+
+      - name: hardcoded-credential scan (bullet 6)
+        run: |
+          hits=$(grep -rInE "(password|secret|api[_-]?key|token)[[:space:]]*[:=][[:space:]]*[\"'][A-Za-z0-9/+_-]{16,}" \
+            terraform gitops scripts build 2>/dev/null \
+            | grep -v ">>> INSERT" | grep -v "adminPassword" | wc -l)
+          if [ "$hits" != "0" ]; then
+            echo "FAIL: $hits hardcoded credential-like strings"; exit 1
+          fi
+          echo "cred scan: 0 hits"

@@ -1,0 +1,51 @@
+# kube-prometheus-stack — the HA Prometheus/Grafana/Alertmanager + node-exporter
+# stack (bullet 3). Installed via helm chart from a HelmRelease-style kustomize
+# base: for ArgoCD we use the chart directory + multi-source app or a rendered
+# base. SIMPLEST ArgoCD-native shape: kustomization pulling the official chart
+# CRD bundle is fragile; instead we ship a values file + a chart-of-record in
+# the child app via spec.source.helm. This dir holds the VALUES + extra rules.
+#
+# Why Standard not Autopilot (Step 0.4): node-exporter DaemonSet hostPath
+# /proc,/sys — blocked by Autopilot PSA.
+prometheus:
+  # Retention short — 7-day POC window, no long-term store claims.
+  prometheusSpec:
+    retention: 3d
+    resources:
+      requests:
+        cpu: 200m
+        memory: 768Mi
+    # Spot pool scheduling for the heavy bits (cost, mirrors AWS-era habit):
+    nodeSelector:
+      gitops-poc/spot: "false" # keep evidence plane on platform pool
+    tolerations: []
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+  service:
+    type: ClusterIP # port-forward only; no LB spend
+
+alertmanager:
+  enabled: true
+  config:
+    route:
+      group_by: ["alertname", "severity"]
+      receiver: poc-catchall
+      routes:
+        - matchers:
+            - severity =~ "critical|warning"
+          receiver: poc-catchall
+    receivers:
+      - name: poc-catchall
+        # POC: evidence is read from Alertmanager API (MTTD measurement) —
+        # no PagerDuty/Slack. >>> INSERT YOUR VALUES: webhook URL if you want one <<<
+        webhook_configs:
+          - url: ">>> INSERT YOUR VALUES: OPTIONAL webhook URL <<<"
+grafana:
+  service:
+    type: ClusterIP
+  adminPassword: ">>> INSERT YOUR VALUES: set a real Grafana admin password <<<" # Sm secret created by ESO in a real setup; POC: change me
+  defaultDashboardsEnabled: true # node dashboard = the -30% Sev1/2 story's substrate
+nodeExporter:
+  enabled: true
+kubeStateMetrics:
+  enabled: true

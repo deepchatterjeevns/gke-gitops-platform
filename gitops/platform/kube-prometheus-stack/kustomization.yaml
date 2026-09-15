@@ -1,0 +1,6 @@
+# The kube-prometheus-stack child Application uses spec.source.helm (chart
+# from OCI/bitnami-style repo URL). This kustomization only ships extra
+# manifests NOT in the chart: none right now — SLO rules are a separate app.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: []

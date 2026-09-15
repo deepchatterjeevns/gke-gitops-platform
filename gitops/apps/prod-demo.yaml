@@ -1,0 +1,42 @@
+# Child app: demo rollout (canary) + Service + ESO secret — PROD overlay.
+# Wave 2 (needs argo-rollouts CRDs + ESO running).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    targetRevision: main
+    path: gitops/apps-src/demo-app/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+# SLO recording rules + burn alerts — PROD only (wave 3: after monitoring CRDs).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: slo-rules-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    targetRevision: main
+    path: gitops/apps-src/slo-rules
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

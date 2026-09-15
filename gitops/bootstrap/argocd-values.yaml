@@ -1,0 +1,58 @@
+# ArgoCD install values (helm-driven, but ArgoCD bootstraps itself).
+# Deployed by scripts/bootstrap_argocd.sh BEFORE app-of-apps takes over.
+# Values tuned for GKE Standard, private nodes, Workload Identity.
+
+server:
+  # POC: no ingress/LB — port-forward only (cost floor + no public surface).
+  service:
+    type: ClusterIP
+
+configs:
+  params:
+    # Both clusters' workloads share this ArgoCD — bullet-1 shape.
+    server.insecure: true
+
+  # Self-heal + prune = drift-detection-and-reconciliation as default posture
+  # (bullet 2). Applied per-Application too; these are the safety nets.
+  resource.customizations: |
+    argoproj.io/Rollout:
+      health.lua: |
+        hs = {}
+        if obj.status ~= nil then
+          if obj.status.phase ~= nil then
+            if obj.status.phase == "Paused" then
+              hs.status = "Progressing"
+              hs.message = "Rollout paused (canary step or analysis)"
+              return hs
+            end
+            if obj.status.phase == "Progressing" then
+              hs.status = "Progressing"
+              hs.message = "Rollout in progress"
+              return hs
+            end
+            if obj.status.phase == "Healthy" then
+              hs.status = "Healthy"
+              hs.message = "Rollout healthy"
+              return hs
+            end
+          end
+        end
+        hs.status = "Progressing"
+        hs.message = "Waiting for rollout status"
+        return hs
+
+controller:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 512Mi
+
+redis:
+  resources:
+    limits:
+      memory: 128Mi
+
+# HA posture honesty: single-replica ArgoCD for the POC (bullet-1 parity is
+# multi-cluster/multi-region, not ArgoCD's own HA — noted in methodology.md).

@@ -1,0 +1,52 @@
+# Cloud Build CI (bullet 10 — Jenkins+webhooks parity, GCP-native).
+# Trigger: GitHub App push to main. This file is the build the trigger runs.
+#
+# Flow: build+push image -> render overlay -> commit kustomize image tag back
+# to Git -> ArgoCD auto-sync picks it up. That commit-back IS the GitOps seam.
+# >>> INSERT YOUR VALUES: substitution vars set at trigger creation (runbook §6).
+steps:
+  - id: "build-and-push"
+    name: "gcr.io/k8s-skaffold/pack"
+    args:
+      - --builder
+      - "gcp/buildpacks"
+      - --build-image
+      - "gcr.io/buildpacks/builder:google-22"
+      - --image
+      - "${_AR_HOST}/${PROJECT_ID}/${_AR_REPO}/demo-app:${SHORT_SHA}"
+      - --path
+      - "sample-app/"
+    # pack because docker-in-docker in Cloud Build needs privileged mode;
+    # pack builds from source directly. (Dockerfile kept in repo for parity
+    # with local `make ci-manual` which uses plain docker.)
+    waitFor: ["-"]
+
+  - id: "commit-image-tag-to-git"
+    name: "gcr.io/cloud-builders/git"
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        git config user.email "cloudbuild@${PROJECT_ID}.iam"
+        git config user.name "cloud-build-ci"
+        git checkout main
+        cd gitops/apps-src/demo-app/overlays/prod
+        kustomize edit set image \
+          ">>> INSERT YOUR AR REPO URL <<<demo-app=${_AR_HOST}/${PROJECT_ID}/${_AR_REPO}/demo-app:${SHORT_SHA}"
+        cd ../../../dev
+        kustomize edit set image \
+          ">>> INSERT YOUR AR REPO URL <<<demo-app=${_AR_HOST}/${PROJECT_ID}/${_AR_REPO}/demo-app:${SHORT_SHA}"
+        cd ../../..
+        git add gitops/apps-src/demo-app/overlays
+        git commit -m "ci: demo-app ${SHORT_SHA} [skip ci]" || echo "no changes"
+        git push https://x-token:${_GITHUB_TOKEN}@github.com/INSERT-USER/gke-gitops-platform.git main
+
+substitutions:
+  _AR_HOST: ">>> INSERT YOUR VALUES: AR host e.g. us-central1-docker.pkg.dev <<<"
+  _AR_REPO: "gitops-poc-apps"
+
+# >>> INSERT YOUR VALUES: link this GitHub trigger via Cloud Build GitHub App
+# (runbook §6) — the push event is the webhook parity of bullet 10. <<<
+options:
+  logging: CLOUD_LOGGING_ONLY

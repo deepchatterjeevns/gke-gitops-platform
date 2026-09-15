@@ -1,0 +1,61 @@
+# DEV overlay: BLUE-GREEN Rollout (bullet 2 — both strategies evidenced).
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: demo-app
+  namespace: demo
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+    spec:
+      serviceAccountName: demo-app
+      containers:
+        - name: demo-app
+          # >>> INSERT YOUR VALUES: AR image — patched by CI/commit flow <<<
+          image: ">>> INSERT YOUR AR REPO URL <<<demo-app:v1"
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: demo-api-key
+                  key: api-key
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+  strategy:
+    blueGreen:
+      activeService: demo-app
+      previewService: demo-app-preview
+      autoPromotionEnabled: false # manual-gate blue-green: promote via git label or kubectl
+      scaleDownDelaySeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app-preview
+  namespace: demo
+spec:
+  selector:
+    app: demo-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

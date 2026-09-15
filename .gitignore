@@ -1,0 +1,22 @@
+# Secrets / values — NEVER commit real values (bullet 6).
+secrets.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+.crash.log
+
+# INSERT-marker patch backups
+*.bak
+
+# Evidence outputs can be committed (they contain no secrets) but keep
+# screenshots out of git (they go in the blog/assets).
+results/**/screenshots/
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor
+.vscode/
+.idea/

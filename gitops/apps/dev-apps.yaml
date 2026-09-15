@@ -1,0 +1,69 @@
+# Dev-cluster child apps — applied BY prod ArgoCD THROUGH the registered
+# dev cluster secret. destination.server = the DEV cluster's registered URL.
+# >>> INSERT YOUR VALUES: dev cluster URL in each destination (printed by
+# scripts/register_cluster.sh after registration — format https://<IP>).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-namespaces-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    targetRevision: main
+    path: gitops/platform/namespaces
+  destination:
+    # >>> INSERT YOUR VALUES: dev cluster server URL from register_cluster.sh <<<
+    server: https://INSERT-DEV-CLUSTER-ENDPOINT
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-rollouts-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    targetRevision: main
+    path: gitops/platform/argo-rollouts
+  destination:
+    # >>> INSERT YOUR VALUES: dev cluster server URL from register_cluster.sh <<<
+    server: https://INSERT-DEV-CLUSTER-ENDPOINT
+    namespace: argo-rollouts
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    targetRevision: main
+    path: gitops/apps-src/demo-app/overlays/dev
+  destination:
+    # >>> INSERT YOUR VALUES: dev cluster server URL from register_cluster.sh <<<
+    server: https://INSERT-DEV-CLUSTER-ENDPOINT
+    namespace: demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

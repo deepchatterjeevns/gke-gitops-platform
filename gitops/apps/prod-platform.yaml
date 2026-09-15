@@ -1,0 +1,89 @@
+# Child app: namespaces + demo KSAs (wave 0 — must exist before WI pods).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-namespaces
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    targetRevision: main
+    path: gitops/platform/namespaces
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    # Wave 0: namespaces + KSAs before anything that lands in them.
+    # ArgoCD sync-wave annotations live in the manifests themselves; this
+    # comment documents the ordering contract.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-rollouts
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    targetRevision: main
+    path: gitops/platform/argo-rollouts
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argo-rollouts
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true # CRDs need server-side apply
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    targetRevision: main
+    path: gitops/platform/kube-prometheus-stack
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    targetRevision: main
+    path: gitops/platform/external-secrets
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-secrets
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
