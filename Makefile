@@ -1,6 +1,6 @@
 # GKE GitOps Platform POC — v2/expansion of the GitOps-on-GKE plan
 # Deadline-driven: credits expire 2026-09-21. See docs/credit-expiry-teardown.md.
-
+PYTHON ?= python
 SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 
@@ -22,7 +22,7 @@ validate-dry: ## $0 validation: terraform fmt/validate + kustomize render + scri
 	kubectl kustomize gitops/apps-src/demo-app/overlays/dev >/dev/null && echo "kustomize: dev overlay OK"
 	kubectl kustomize gitops/apps-src/slo-rules >/dev/null && echo "kustomize: slo-rules OK"
 	for s in scripts/*.sh scripts/evidence_tests/*.sh; do bash -n $$s || exit 1; done && echo "bash parse: OK"
-	python3 -m py_compile scripts/generate_traffic.py scripts/summarize_evidence.py && echo "python parse: OK"
+	$(PYTHON) -m py_compile scripts/generate_traffic.py scripts/summarize_evidence.py && echo "python parse: OK"
 
 .PHONY: apply
 apply: ## Day-1: layers 0-3 + ArgoCD + dev registration + root app
