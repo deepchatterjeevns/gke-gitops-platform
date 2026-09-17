@@ -1,6 +1,7 @@
 # ESO install (bullet 6). Kustomization over the official manifest bundle.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: external-secrets
 resources:
   - https://github.com/external-secrets/external-secrets/releases/download/v0.18.1/external-secrets.yaml
 patches:
