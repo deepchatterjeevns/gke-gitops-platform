@@ -19,7 +19,7 @@ spec:
       containers:
         - name: demo-app
           # >>> INSERT YOUR VALUES: AR image — patched by CI/commit flow <<<
-          image: ">>> INSERT YOUR AR REPO URL <<<demo-app:v1"
+          image: "us-central1-docker.pkg.dev/gcplearn9-498315/gitops-poc-apps/demo-app:v1"
           ports:
             - containerPort: 8080
           env:

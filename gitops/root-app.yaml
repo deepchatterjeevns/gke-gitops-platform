@@ -14,7 +14,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ">>> INSERT YOUR VALUES: your GitHub repo URL (https://github.com/USER/gke-gitops-platform.git) <<<"
+    repoURL: "https://github.com/deepchatterjeevns/gke-gitops-platform.git"
     targetRevision: main
     path: gitops/apps
     directory:

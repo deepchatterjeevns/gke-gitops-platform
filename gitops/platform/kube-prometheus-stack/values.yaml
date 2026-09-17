@@ -39,11 +39,11 @@ alertmanager:
         # POC: evidence is read from Alertmanager API (MTTD measurement) —
         # no PagerDuty/Slack. >>> INSERT YOUR VALUES: webhook URL if you want one <<<
         webhook_configs:
-          - url: ">>> INSERT YOUR VALUES: OPTIONAL webhook URL <<<"
+          - url: ""
 grafana:
   service:
     type: ClusterIP
-  adminPassword: ">>> INSERT YOUR VALUES: set a real Grafana admin password <<<" # Sm secret created by ESO in a real setup; POC: change me
+  adminPassword: "admin123" # Sm secret created by ESO in a real setup; POC: change me
   defaultDashboardsEnabled: true # node dashboard = the -30% Sev1/2 story's substrate
 nodeExporter:
   enabled: true

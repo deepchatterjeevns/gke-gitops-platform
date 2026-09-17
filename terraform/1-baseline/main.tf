@@ -21,7 +21,7 @@ terraform {
   }
   backend "gcs" {
     # >>> INSERT YOUR VALUES: bucket from layer 0 (deploy.sh patches this) <<<
-    bucket = "gke-gitops-tfstate-YOUR-SUFFIX"
+    bucket = "gke-gitops-tfstate-498315"
     prefix = "baseline"
   }
 }
@@ -46,8 +46,14 @@ variable "billing_account_id" {
 }
 
 provider "google" {
-  project = var.gcp_project_id
-  region  = var.gcp_region
+  project               = var.gcp_project_id
+  region                = var.gcp_region
+  user_project_override = true
+  billing_project       = var.gcp_project_id
+}
+
+data "google_project" "current" {
+  project_id = var.gcp_project_id
 }
 
 # --- API enablement, ORDER MATTERS (gotcha #1: enabled != EFFECTIVE) --------
@@ -120,9 +126,7 @@ resource "google_secret_manager_secret_version" "demo_api_key_v1" {
 }
 
 # --- Credit-ceiling budget (Part C: target = the CREDIT BALANCE, not a token cap)
-# ~INR 40,000 ~= $480 USD ceiling. Thresholds 50/80/100% via Pub/Sub (pull sub).
-# This is a maximization exercise bounded by the credit: the ceiling is the
-# FULL balance so we never bill the real card past credits.
+# ~INR 40,000 ceiling. Thresholds 50/80/100% via Pub/Sub.
 resource "google_pubsub_topic" "budget_alerts" {
   name = "${var.name_prefix}-budget-alerts"
 }
@@ -138,13 +142,13 @@ resource "google_billing_budget" "credit_ceiling" {
   display_name    = "gke-gitops-poc-credit-ceiling"
 
   budget_filter {
-    projects = ["projects/${var.gcp_project_id}"]
+    projects = ["projects/${data.google_project.current.number}"]
   }
 
   amount {
     specified_amount {
-      currency_code = "USD"
-      units         = "480" # ~= INR 40,000 credit balance — the ceiling
+      currency_code = "INR"
+      units         = "40000" # credit ceiling in the billing account currency
     }
   }
 
@@ -157,7 +161,7 @@ resource "google_billing_budget" "credit_ceiling" {
 
   all_updates_rule {
     pubsub_topic   = google_pubsub_topic.budget_alerts.id
-    schema_version = "2.0"
+    schema_version = "1.0"
   }
 }
 

@@ -15,7 +15,7 @@ metadata:
   namespace: demo
   annotations:
     # >>> INSERT YOUR VALUES: from terraform layer 3 output demo_app_gsa_email <<<
-    iam.gke.serviceAccount: ">>> INSERT YOUR VALUES: GSA EMAIL (gitops-poc-demo-app@PROJECT.iam.gserviceaccount.com) <<<"
+    iam.gke.serviceAccount: "gitops-poc-demo-app@gcplearn9-498315.iam.gserviceaccount.com"
 ---
 # ESO needs its own KSA annotated too (ESO controller reads Secret Manager).
 apiVersion: v1
@@ -25,4 +25,4 @@ metadata:
   namespace: demo
   annotations:
     # >>> INSERT YOUR VALUES: same GSA email — ESO fetches on behalf of demo <<<
-    iam.gke.serviceAccount: ">>> INSERT YOUR VALUES: GSA EMAIL (gitops-poc-demo-app@PROJECT.iam.gserviceaccount.com) <<<"
+    iam.gke.serviceAccount: "gitops-poc-demo-app@gcplearn9-498315.iam.gserviceaccount.com"

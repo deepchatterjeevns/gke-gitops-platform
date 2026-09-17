@@ -37,14 +37,16 @@ variable "bucket_suffix" {
 }
 
 provider "google" {
-  project = var.gcp_project_id
-  region  = var.gcp_region
+  project               = var.gcp_project_id
+  region                = var.gcp_region
+  user_project_override = true
+  billing_project       = var.gcp_project_id
 }
 
 resource "google_storage_bucket" "state" {
-  name                       = "gke-gitops-tfstate-${var.bucket_suffix}"
-  location                   = "US"
-  force_destroy              = false
+  name                        = "gke-gitops-tfstate-${var.bucket_suffix}"
+  location                    = "US"
+  force_destroy               = false
   uniform_bucket_level_access = true
 
   # State survives stack teardown; hand-delete at retirement only.

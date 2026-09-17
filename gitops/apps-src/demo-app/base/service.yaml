@@ -29,9 +29,9 @@ spec:
       auth:
         workloadIdentity:
           # >>> INSERT YOUR VALUES: cluster location + project (the WI pool) <<<
-          clusterLocation: ">>> INSERT YOUR VALUES: REGION (us-central1 or asia-south1) <<<"
-          projectNumber: ">>> INSERT YOUR VALUES: PROJECT NUMBER (gcloud projects describe --format=value(projectNumber)) <<<"
-          serviceAccountEmail: ">>> INSERT YOUR VALUES: GSA EMAIL <<<"
+          clusterLocation: "us-central1"
+          projectNumber: "354890609401"
+          serviceAccountEmail: "gitops-poc-demo-app@gcplearn9-498315.iam.gserviceaccount.com"
 ---
 # The projected secret (created by ESO from Secret Manager).
 apiVersion: external-secrets.io/v1beta1

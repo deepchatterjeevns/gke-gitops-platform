@@ -43,7 +43,7 @@ steps:
         git push https://x-token:${_GITHUB_TOKEN}@github.com/INSERT-USER/gke-gitops-platform.git main
 
 substitutions:
-  _AR_HOST: ">>> INSERT YOUR VALUES: AR host e.g. us-central1-docker.pkg.dev <<<"
+  _AR_HOST: "us-central1-docker.pkg.dev"
   _AR_REPO: "gitops-poc-apps"
 
 # >>> INSERT YOUR VALUES: link this GitHub trigger via Cloud Build GitHub App

@@ -18,8 +18,7 @@ spec:
       serviceAccountName: demo-app
       containers:
         - name: demo-app
-          # >>> INSERT YOUR VALUES: AR image — patched by deploy.sh / CI (kustomize images) <<<
-          image: ">>> INSERT YOUR AR REPO URL <<<demo-app:v1"
+           image: "us-central1-docker.pkg.dev/your-project-id/gitops-poc-apps/demo-app:v1"
           ports:
             - containerPort: 8080
           env:
@@ -44,12 +43,6 @@ spec:
     canary:
       stableService: demo-app-stable
       canaryService: demo-app-canary
-      trafficRouting:
-        # Service-level canary (no LB spend): ArgoCD-style weight by replica
-        # selection through the two Services. GCP LB would be bullet 11 — deferred.
-        service:
-          stableService: demo-app-stable
-          canaryService: demo-app-canary
       steps:
         - setWeight: 10
         - pause: { duration: 30s }

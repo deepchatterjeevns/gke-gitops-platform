@@ -27,7 +27,7 @@ terraform {
   }
   backend "gcs" {
     # >>> INSERT YOUR VALUES: bucket from layer 0 (deploy.sh patches this) <<<
-    bucket = "gke-gitops-tfstate-YOUR-SUFFIX"
+    bucket = "gke-gitops-tfstate-498315"
     prefix = "clusters"
   }
 }
@@ -63,8 +63,10 @@ variable "dev_network" { default = "gitops-poc-dev-vpc" }
 variable "dev_subnet" { default = "gitops-poc-dev-subnet" }
 
 provider "google" {
-  project = var.gcp_project_id
-  region  = var.prod_region
+  project               = var.gcp_project_id
+  region                = var.prod_region
+  user_project_override = true
+  billing_project       = var.gcp_project_id
 }
 
 # --- PROD cluster (us-central1, regional, Standard) ------------------------------
@@ -113,7 +115,7 @@ resource "google_container_cluster" "prod" {
     workload_pool = "${var.gcp_project_id}.svc.id.goog"
   }
 
-  deletion_protection = false # GOTCHA #2: TF default is true — destroy hangs
+  deletion_protection      = false # GOTCHA #2: TF default is true — destroy hangs
   enable_l4_ilb_subsetting = true
 
   resource_labels = {
@@ -124,11 +126,9 @@ resource "google_container_cluster" "prod" {
   # Default pool: on-demand, small — ArgoCD + monitoring live here.
   # Gotcha #4: min node counts are TOTAL across the region's zones.
   node_pool {
-    name = "platform-pool"
+    name               = "platform-pool"
     initial_node_count = 1
     autoscaling {
-      min_node_count       = 1
-      max_node_count       = 2
       total_min_node_count = 1
       total_max_node_count = 2
     }
@@ -153,7 +153,7 @@ resource "google_container_cluster" "prod" {
 
   # Secondary pool: SPOT — demo apps + anything stateless tolerate eviction.
   node_pool {
-    name = "spot-pool"
+    name               = "spot-pool"
     initial_node_count = 1
     autoscaling {
       total_min_node_count = 1
@@ -166,8 +166,8 @@ resource "google_container_cluster" "prod" {
       image_type   = "COS_CONTAINERD"
       # Spot: preemptible-class VMs, ~60-70% off — mirrors the AWS-era
       # Spot-managed-node-group habit.
-      preemptible     = false
-      spot            = true
+      preemptible = false
+      spot        = true
       oauth_scopes = [
         "https://www.googleapis.com/auth/cloud-platform",
       ]
@@ -247,7 +247,7 @@ resource "google_container_cluster" "dev" {
   }
 
   node_pool {
-    name = "platform-pool"
+    name               = "platform-pool"
     initial_node_count = 1
     autoscaling {
       total_min_node_count = 1

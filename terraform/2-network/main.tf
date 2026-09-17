@@ -19,7 +19,7 @@ terraform {
   }
   backend "gcs" {
     # >>> INSERT YOUR VALUES: bucket from layer 0 (deploy.sh patches this) <<<
-    bucket = "gke-gitops-tfstate-YOUR-SUFFIX"
+    bucket = "gke-gitops-tfstate-498315"
     prefix = "network"
   }
 }
@@ -45,7 +45,9 @@ variable "dev_region" {
 }
 
 provider "google" {
-  project = var.gcp_project_id
+  project               = var.gcp_project_id
+  user_project_override = true
+  billing_project       = var.gcp_project_id
 }
 
 # --- Prod region network (us-central1) ------------------------------------------
@@ -87,6 +89,7 @@ resource "google_compute_router_nat" "prod" {
   name                               = "${var.name_prefix}-prod-nat"
   region                             = var.prod_region
   router                             = google_compute_router.prod.name
+  nat_ip_allocate_option             = "MANUAL_ONLY"
   nat_ips                            = [google_compute_address.prod_nat.self_link]
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 
@@ -135,6 +138,7 @@ resource "google_compute_router_nat" "dev" {
   name                               = "${var.name_prefix}-dev-nat"
   region                             = var.dev_region
   router                             = google_compute_router.dev.name
+  nat_ip_allocate_option             = "MANUAL_ONLY"
   nat_ips                            = [google_compute_address.dev_nat.self_link]
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 

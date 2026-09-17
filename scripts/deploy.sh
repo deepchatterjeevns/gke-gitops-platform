@@ -79,13 +79,24 @@ kubectl config rename-context "gke_${PROJECT}_${DEV_LOC}_${DEV_CLUSTER}" gitops-
 
 # --- 4. Multi-cluster gotcha #8: whitelist prod NAT on dev master ------------------
 log "whitelisting prod NAT IP ($PROD_NAT_IP) on dev master authorized networks"
+WORKSTATION_IP="${MASTER_AUTHORIZED_CIDR:-}"
+if [[ -z "$WORKSTATION_IP" ]]; then
+  WORKSTATION_IP="$(curl -fsS https://ifconfig.me 2>/dev/null || true)"
+fi
+MASTER_NETWORKS="${PROD_NAT_IP}/32"
+if [[ -n "$WORKSTATION_IP" && "$WORKSTATION_IP" =~ ^[0-9]+(\.[0-9]+){3}$ ]]; then
+  MASTER_NETWORKS="$MASTER_NETWORKS,$WORKSTATION_IP/32"
+fi
 gcloud container clusters update "$DEV_CLUSTER" --region "$DEV_LOC" \
   --enable-master-authorized-networks \
-  --master-authorized-networks "${PROD_NAT_IP}/32" >/dev/null \
-  || echo "NOTE: add ${PROD_NAT_IP}/32 to dev master authorized networks manually (or rerun deploy)"
+  --master-authorized-networks "$MASTER_NETWORKS" >/dev/null \
+  || echo "NOTE: add $MASTER_NETWORKS to dev master authorized networks manually (or rerun deploy)"
 
 # --- 5. Bootstrap ArgoCD on prod --------------------------------------------------
 log "bootstrap: ArgoCD (helm)"
+# get-credentials for dev makes gitops-dev the current kubectl context.
+# Explicitly select prod so Helm installs ArgoCD on the prod cluster.
+kubectl config use-context gitops-prod >/dev/null
 helm repo add argo https://argoproj.github.io/argo-helm >/dev/null 2>&1 || true
 helm repo update >/dev/null
 helm upgrade --install argocd argo/argo-cd \
