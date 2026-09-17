@@ -17,3 +17,5 @@ patches:
             memory: 64Mi
           limits:
             memory: 128Mi
+commonLabels:
+  argocd.argoproj.io/managed-by: external-secrets-dev
