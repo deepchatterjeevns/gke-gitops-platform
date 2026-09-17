@@ -24,9 +24,9 @@ spec:
 
         # --- Error budget: 99.9% target => 0.1% budget over 28d ------------------
         - record: demo:error_budget:ratio
-          expr: "0.001"
+          expr: "vector(0.001)"
         - record: demo:availability_objective:ratio
-          expr: "0.999"
+          expr: "vector(0.999)"
         - record: demo:burn_rate5m
           expr: demo:errors:rate5m / demo:requests:rate5m / demo:error_budget:ratio
         - record: demo:burn_rate1h
