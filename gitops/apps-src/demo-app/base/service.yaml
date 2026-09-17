@@ -18,7 +18,7 @@ spec:
       targetPort: 8080
 ---
 # SecretStore: Secret Manager via Workload Identity (bullet 6).
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
   name: gcp-secret-store
@@ -34,7 +34,7 @@ spec:
           serviceAccountEmail: "gitops-poc-demo-app@gcplearn9-498315.iam.gserviceaccount.com"
 ---
 # The projected secret (created by ESO from Secret Manager).
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: demo-api-key
