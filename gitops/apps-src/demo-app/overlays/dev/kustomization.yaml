@@ -1,6 +1,19 @@
-# DEV overlay kustomization — base + blue-green Rollout.
+# DEV overlay kustomization — base + blue-green Rollout + SecretStore patch.
+# Patch overrides cluster identity fields for Dev cluster (asia-south1, gitops-poc-dev-in).
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../base
   - rollout.yaml
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/provider/gcpsm/auth/workloadIdentity/clusterLocation
+        value: asia-south1
+      - op: replace
+        path: /spec/provider/gcpsm/auth/workloadIdentity/clusterName
+        value: gitops-poc-dev-in
+    target:
+      kind: SecretStore
+      name: gcp-secret-store
+      namespace: demo
