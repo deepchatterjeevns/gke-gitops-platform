@@ -26,12 +26,14 @@ metadata:
 spec:
   provider:
     gcpsm:
+      projectID: "gcplearn9-498315"
       auth:
         workloadIdentity:
-          # >>> INSERT YOUR VALUES: cluster location + project (the WI pool) <<<
           clusterLocation: "us-central1"
-          projectNumber: "354890609401"
-          serviceAccountEmail: "gitops-poc-demo-app@gcplearn9-498315.iam.gserviceaccount.com"
+          clusterName: "gitops-poc-prod-us"
+          clusterProjectID: "gcplearn9-498315"
+          serviceAccountRef:
+            name: demo-app
 ---
 # The projected secret (created by ESO from Secret Manager).
 apiVersion: external-secrets.io/v1
