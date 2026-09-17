@@ -10,12 +10,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    repoURL: "https://github.com/deepchatterjeevns/gke-gitops-platform.git"
     targetRevision: main
     path: gitops/platform/namespaces
   destination:
     # >>> INSERT YOUR VALUES: dev cluster server URL from register_cluster.sh <<<
-    server: https://INSERT-DEV-CLUSTER-ENDPOINT
+    server: https://8.234.112.170
   syncPolicy:
     automated:
       prune: true
@@ -31,12 +31,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    repoURL: "https://github.com/deepchatterjeevns/gke-gitops-platform.git"
     targetRevision: main
     path: gitops/platform/argo-rollouts
   destination:
     # >>> INSERT YOUR VALUES: dev cluster server URL from register_cluster.sh <<<
-    server: https://INSERT-DEV-CLUSTER-ENDPOINT
+    server: https://8.234.112.170
     namespace: argo-rollouts
   syncPolicy:
     automated:
@@ -54,12 +54,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    repoURL: "https://github.com/deepchatterjeevns/gke-gitops-platform.git"
     targetRevision: main
     path: gitops/apps-src/demo-app/overlays/dev
   destination:
     # >>> INSERT YOUR VALUES: dev cluster server URL from register_cluster.sh <<<
-    server: https://INSERT-DEV-CLUSTER-ENDPOINT
+    server: https://8.234.112.170
     namespace: demo
   syncPolicy:
     automated:

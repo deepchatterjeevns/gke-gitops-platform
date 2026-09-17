@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    repoURL: "https://github.com/deepchatterjeevns/gke-gitops-platform.git"
     targetRevision: main
     path: gitops/apps-src/demo-app/overlays/prod
   destination:
@@ -30,7 +30,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ">>> INSERT YOUR VALUES: repo URL <<<"
+    repoURL: "https://github.com/deepchatterjeevns/gke-gitops-platform.git"
     targetRevision: main
     path: gitops/apps-src/slo-rules
   destination:
